@@ -1,0 +1,23 @@
+--delete dups
+start r=relationship(*) 
+match s-[r]->e 
+with s,e,type(r) as typ, tail(collect(r)) as coll 
+foreach(x in coll | delete x)
+
+--load all nodes and connections
+LOAD CSV FROM "file:////Users/sagivo/dev/work/brewster/log/export_graph.csv" as line  
+match (p:Person)
+where p.id in tail(line)
+match (f:Person {id: line[0]} )
+create (f)-[:Connected]->(p)
+
+-- get top connected people
+match (p:Person)-[r:Connected]->(Person)
+return p, count(r)
+order by count(r) desc
+limit 20
+
+--delete all nodes and connections
+ START n = node(*) 
+ OPTIONAL MATCH n-[r]-() 
+ DELETE n, r;
